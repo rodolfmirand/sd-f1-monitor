@@ -1,10 +1,17 @@
 import paho.mqtt.client as mqtt
-import json, time, datetime
+import json, time, datetime, os
 from pymongo import MongoClient
 from models import CarData
 
-mongo = MongoClient("mongodb://mongo:27017/")
-db = mongo["f1_db"]
+MONGO_HOST = os.environ.get("MONGO_HOST", "mongo")
+MONGO_PORT = int(os.environ.get("MONGO_PORT", 27017))
+DB_NAME = os.environ.get("MONGO_DB", "f1_db")
+
+MQTT_HOST = os.environ.get("MQTT_HOST", "mqtt-broker")
+MQTT_PORT = int(os.environ.get("MQTT_PORT", 1883))
+
+client = MongoClient(f"mongodb://{MONGO_HOST}:{MONGO_PORT}/")
+db = client[DB_NAME]
 collection = db["telemetria"]
 
 def msg(c, u, m):
