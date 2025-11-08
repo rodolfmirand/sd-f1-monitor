@@ -7,6 +7,13 @@ services:
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
 
+  id-server:
+    build:
+      context: .
+      dockerfile: ./sccp/Dockerfile
+    container_name: id-server
+    command: python -u sccp/id_server.py
+
   isccp:
     build:
       context: .
@@ -15,6 +22,7 @@ services:
     command: python -u sccp/isccp.py
     depends_on:
       - mqtt-broker
+      - id-server
 
   sacp:
     build:
@@ -33,3 +41,4 @@ services:
     command: python -u sccp/car.py
     depends_on:
       - mqtt-broker
+      - id-server
