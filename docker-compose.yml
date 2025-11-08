@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   mqtt-broker:
     image: eclipse-mosquitto
@@ -17,6 +15,16 @@ services:
     command: python -u sccp/isccp.py
     depends_on:
       - mqtt-broker
+
+  sacp:
+    build:
+      context: .
+      dockerfile: ./sccp/Dockerfile
+    container_name: sacp
+    command: python -u sccp/sacp.py
+    depends_on:
+      - mqtt-broker
+      - isccp
 
   car:
     build:
