@@ -3,50 +3,73 @@ services:
     image: eclipse-mosquitto
     container_name: mqtt-broker
     ports:
-      - "1883:1883"
+      - "${MQTT_PORT}:1883"
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    env_file:
+      - .env
 
   id-server:
     build:
-      context: .
-      dockerfile: ./sccp/Dockerfile
+      context: ./sccp
+      dockerfile: Dockerfile
     container_name: id-server
-    command: python -u sccp/id_server.py
+    command: python -u id_server.py
+    env_file:
+      - .env
 
   isccp:
     build:
-      context: .
-      dockerfile: ./sccp/Dockerfile
+      context: ./sccp
+      dockerfile: Dockerfile
     container_name: isccp
-    command: python -u sccp/isccp.py
+    command: python -u isccp.py
     depends_on:
       - mqtt-broker
       - id-server
+    env_file:
+      - .env
+
+  ssacp:
+    build:
+      context: ./sccp
+      dockerfile: Dockerfile
+    container_name: ssacp
+    command: python -u sacp.py
+    depends_on:
+      - mqtt-broker
+      - mongo
+    env_file:
+      - .env
+
+  car:
+    build:
+      context: ./sccp
+      dockerfile: Dockerfile
+    container_name: car
+    command: python -u car.py
+    depends_on:
+      - mqtt-broker
+      - id-server
+    env_file:
+      - .env
 
   mongo:
     image: mongo
     container_name: mongo
     ports:
-      - "27017:27017"
+      - "${MONGO_PORT}:27017"
     volumes:
       - ./mongo_data:/data/db
       
-  sacp:
+  svcp:
     build:
-      context: .
-      dockerfile: ./sccp/Dockerfile
-    container_name: sacp
-    command: python -u sccp/sacp.py
+      context: ./svcp
+      dockerfile: Dockerfile
+    container_name: svcp
+    ports:
+      - "${SVCP_PORT}:8000"
     depends_on:
-      - mqtt-broker
       - mongo
-
-  car:
-    build:
-      context: .
-      dockerfile: ./sccp/Dockerfile
-    command: python -u sccp/car.py
-    depends_on:
-      - mqtt-broker
-      - id-server
+    env_file:
+      - .env
