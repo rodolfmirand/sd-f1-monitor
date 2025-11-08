@@ -1,35 +1,33 @@
 import paho.mqtt.client as mqtt
 import json, time, datetime
+from pymongo import MongoClient
+from models import CarData
 
-dados = []
+mongo = MongoClient("mongodb://mongo:27017/")
+db = mongo["f1_db"]
+collection = db["telemetria"]
 
 def msg(c, u, m):
     d = json.loads(m.payload.decode())
-    dados.append(d)
+    obj = CarData.from_dict(d)
     ts = datetime.datetime.now().strftime("%H:%M:%S")
+    collection.insert_one(obj.to_dict())
 
-    avg_temp = sum([
-        d["front_left"],
-        d["front_right"],
-        d["rear_left"],
-        d["rear_right"]
-    ]) / 4
-
-    print(f"[{ts}] [SACP] Dados recebidos de {d['name']} ({d['team']}): média pneus = {avg_temp:.2f}")
+    print(f"[{ts}] [SSACP] Dados armazenados: {obj.name} ({obj.team}) posição {obj.position:.2f}")
 
 c = mqtt.Client("sacp")
 
 while True:
     try:
         c.connect("mqtt-broker", 1883, 60)
-        print("[SACP] Conectado ao broker!")
+        print("[SSACP] Conectado ao broker!")
         break
     except:
-        print("[SACP] Broker ainda não disponível... tentando novamente em 2s")
+        print("[SSACP] Broker ainda não disponível... tentando novamente em 2s")
         time.sleep(2)
 
 c.on_message = msg
-c.subscribe("f1/isccp/dados")
+c.subscribe("f1/isccp/obj")
 
-print("[SACP] Aguardando dados...")
+print("[SSACP] Aguardando dados...")
 c.loop_forever()
