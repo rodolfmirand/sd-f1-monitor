@@ -1,7 +1,19 @@
 import paho.mqtt.client as mqtt
-import random, json, time, string, os
+import random, json, time, string, socket
 
-id = int(os.getenv("CAR_ID", 1))
+while True:
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(("id-server", 5000))
+        id = int(s.recv(1024).decode())
+        s.close()
+        break
+    except:
+        print("[CAR] Servidor de ID ainda não disponível... tentando novamente em 2s")
+        time.sleep(2)
+
+print(f"[CAR] Recebi ID = {id}")
+
 team = random.choice(["Red Bull", "Ferrari", "Mercedes", "McLaren", "Aston Martin", "Williams"])
 name = ''.join(random.choices(string.ascii_uppercase, k=3)) + str(random.randint(1,99))
 c = mqtt.Client(f"car{id}")
