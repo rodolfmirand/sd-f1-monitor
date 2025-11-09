@@ -158,3 +158,15 @@ services:
       - mongo3
     env_file:
       - .env
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - svcp
+    environment:
+      - VITE_API_BASE=http://svcp:8000
