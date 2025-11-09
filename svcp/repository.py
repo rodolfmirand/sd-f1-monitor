@@ -1,19 +1,45 @@
 from pymongo import MongoClient
-import os
+import os, time
 
-MONGO_HOST = os.environ.get("MONGO_HOST", "mongo")
 MONGO_PORT = int(os.environ.get("MONGO_PORT", 27017))
-DB_NAME = os.environ.get("MONGO_DB", "f1_db")
 
-client = MongoClient(f"mongodb://{MONGO_HOST}:{MONGO_PORT}/")
-db = client[DB_NAME]
-colecao_veiculos = db["telemetria"]
+DBS = [
+    {"host": "mongo1", "db": "f1_db_1"},
+    {"host": "mongo2", "db": "f1_db_2"},
+    {"host": "mongo3", "db": "f1_db_3"},
+]
+
+clients = []
+for conf in DBS:
+    while True:
+        try:
+            uri = f"mongodb://{conf['host']}:{MONGO_PORT}/"
+            client = MongoClient(uri, serverSelectionTimeoutMS=2000)
+            client.admin.command("ping")  # testa conexão
+            clients.append(client[conf["db"]])
+            print(f"[SVCP] Conectado ao banco {conf['db']} em {conf['host']}")
+            break
+        except Exception as e:
+            print(f"[SVCP] Aguardando {conf['host']}... ({e})")
+            time.sleep(2)
+
+collections = [db["telemetria"] for db in clients]
+
 
 def listar_veiculos():
-    return list(colecao_veiculos.find({}, {"_id": 0, "id": 1, "name": 1, "team": 1}))
+    resultado = []
+    for col in collections:
+        resultado.extend(list(col.find({}, {"_id": 0, "id": 1, "name": 1, "team": 1})))
+    return resultado
+
 
 def obter_veiculo(idVeiculo: int):
-    return colecao_veiculos.find_one({"id": idVeiculo}, {"_id": 0})
+    for col in collections:
+        veiculo = col.find_one({"id": idVeiculo}, {"_id": 0})
+        if veiculo:
+            return veiculo
+    return None
+
 
 def pneus_com_alerta():
     query = {
@@ -24,13 +50,12 @@ def pneus_com_alerta():
             {"rear_right": {"$lt": 85}},
         ]
     }
-    return list(colecao_veiculos.find(query, {
-        "_id": 0,
-        "id": 1,
-        "name": 1,
-        "team": 1,
-        "front_left": 1,
-        "front_right": 1,
-        "rear_left": 1,
-        "rear_right": 1
-    }))
+
+    resultado = []
+    for col in collections:
+        resultado.extend(list(col.find(query, {
+            "_id": 0, "id": 1, "name": 1, "team": 1,
+            "front_left": 1, "front_right": 1,
+            "rear_left": 1, "rear_right": 1
+        })))
+    return resultado
