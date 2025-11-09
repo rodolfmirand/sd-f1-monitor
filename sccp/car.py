@@ -5,6 +5,7 @@ while True:
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(("id-server", 5000))
+        s.sendall(b"car")
         id = int(s.recv(1024).decode())
         s.close()
         break
