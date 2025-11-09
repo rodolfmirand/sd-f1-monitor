@@ -1,26 +1,33 @@
 import paho.mqtt.client as mqtt
-import json, time, datetime
+import json, time, datetime, random
 from models import CarData
+
+INSTANCE_ID = random.randint(1000, 9999)
+ssacp_ids = [1, 2, 3]
 
 def msg(c, u, m):
     d = json.loads(m.payload.decode())
     obj = CarData(**d)
     ts = datetime.datetime.now().strftime("%H:%M:%S")
-    print(f"[{ts}] Enviando objeto de {obj.name} ({obj.team}) para o SSACP")
-    c.publish("f1/isccp/obj", json.dumps(obj.to_dict()))
+    
+    destino = random.choice(ssacp_ids)
+    print(f"[{ts}] ISCCP-{INSTANCE_ID} enviando {obj.name} -> SSACP {destino}")
+    
+    c.publish(f"f1/ssacp/{destino}", json.dumps(obj.to_dict()))
 
-c = mqtt.Client("isccp")
+c = mqtt.Client(f"isccp{INSTANCE_ID}")
+
 while True:
     try:
         c.connect("mqtt-broker", 1883, 60)
-        print("[ISCCP] Conectado ao broker!")
+        print(f"[ISCCP-{INSTANCE_ID}] Conectado ao broker!")
         break
     except:
-        print("[ISCCP] Broker ainda não disponível... tentando novamente em 2s")
+        print(f"[ISCCP-{INSTANCE_ID}] Broker ainda não disponível... tentando novamente em 2s")
         time.sleep(2)
 
 c.on_message = msg
 c.subscribe("f1/carros/#")
 
-print("[ISCCP] Aguardando mensagens...")
+print(f"[ISCCP-{INSTANCE_ID}] Aguardando mensagens...")
 c.loop_forever()
