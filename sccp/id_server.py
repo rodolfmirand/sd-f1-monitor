@@ -3,22 +3,40 @@ import threading
 
 HOST = ''
 PORT = 5000
-next_id = 1
+
+next_car_id = 1
+next_isccp_id = 1000
 lock = threading.Lock()
 
 def handle_client(conn, addr):
-    global next_id
-    with lock:
-        car_id = next_id
-        next_id += 1
-    conn.sendall(str(car_id).encode())
-    conn.close()
-    print(f"[ID SERVER] Enviado ID {car_id} para {addr}")
+    global next_car_id, next_isccp_id
+
+    try:
+        tipo = conn.recv(1024).decode().strip().lower()
+        with lock:
+            if tipo == "car":
+                car_id = next_car_id
+                next_car_id += 1
+                conn.sendall(str(car_id).encode())
+                print(f"[ID SERVER] Enviado ID de CARRO {car_id} para {addr}")
+            elif tipo == "isccp":
+                isccp_id = next_isccp_id
+                next_isccp_id += 1
+                conn.sendall(str(isccp_id).encode())
+                print(f"[ID SERVER] Enviado ID de ISCCP {isccp_id} para {addr}")
+            else:
+                conn.sendall(b"ERRO: tipo invalido (use 'car' ou 'isccp')")
+                print(f"[ID SERVER] Tipo de cliente desconhecido: {tipo} ({addr})")
+
+    except Exception as e:
+        print(f"[ID SERVER] Erro ao lidar com {addr}: {e}")
+    finally:
+        conn.close()
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 s.listen()
-print(f"[ID SERVER] Aguardando conexões na porta {PORT}...")
+print(f"[ID SERVER] Servidor de IDs rodando na porta {PORT}...")
 
 while True:
     conn, addr = s.accept()
