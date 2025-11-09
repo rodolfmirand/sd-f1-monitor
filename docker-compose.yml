@@ -17,28 +17,118 @@ services:
     command: python -u id_server.py
     env_file:
       - .env
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo > /dev/tcp/localhost/5000"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
 
   isccp:
     build:
       context: ./sccp
       dockerfile: Dockerfile
-    container_name: isccp
     command: python -u isccp.py
     depends_on:
-      - mqtt-broker
-      - id-server
+      id-server:
+        condition: service_healthy
+      mqtt-broker:
+        condition: service_started
+    deploy:
+      replicas: 15
+    environment:
+      - TOTAL_INSTANCES=15
+      - TOTAL_CARS=24
     env_file:
       - .env
 
-  ssacp:
+  mongo1:
+    image: mongo
+    container_name: mongo1
+    ports:
+      - "27018:27017"
+    volumes:
+      - ./mongo_data_1:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  mongo2:
+    image: mongo
+    container_name: mongo2
+    ports:
+      - "27019:27017"
+    volumes:
+      - ./mongo_data_2:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  mongo3:
+    image: mongo
+    container_name: mongo3
+    ports:
+      - "27020:27017"
+    volumes:
+      - ./mongo_data_3:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  ssacp1:
     build:
       context: ./sccp
       dockerfile: Dockerfile
-    container_name: ssacp
     command: python -u sacp.py
     depends_on:
-      - mqtt-broker
-      - mongo
+      mqtt-broker:
+        condition: service_started
+      mongo1:
+        condition: service_healthy
+    environment:
+      - MONGO_HOST=mongo1
+      - MONGO_DB=f1_db_1
+    env_file:
+      - .env
+
+  ssacp2:
+    build:
+      context: ./sccp
+      dockerfile: Dockerfile
+    command: python -u sacp.py
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+      mongo2:
+        condition: service_healthy
+    environment:
+      - MONGO_HOST=mongo2
+      - MONGO_DB=f1_db_2
+    env_file:
+    
+      - .env
+  ssacp3:
+    build:
+      context: ./sccp
+      dockerfile: Dockerfile
+    command: python -u sacp.py
+    depends_on:
+      mqtt-broker:
+        condition: service_started
+      mongo3:
+        condition: service_healthy
+    environment:
+      - MONGO_HOST=mongo3
+      - MONGO_DB=f1_db_3
     env_file:
       - .env
 
@@ -46,22 +136,15 @@ services:
     build:
       context: ./sccp
       dockerfile: Dockerfile
-    container_name: car
     command: python -u car.py
     depends_on:
       - mqtt-broker
       - id-server
+    deploy:
+      replicas: 24
     env_file:
       - .env
 
-  mongo:
-    image: mongo
-    container_name: mongo
-    ports:
-      - "${MONGO_PORT}:27017"
-    volumes:
-      - ./mongo_data:/data/db
-      
   svcp:
     build:
       context: ./svcp
@@ -70,6 +153,8 @@ services:
     ports:
       - "${SVCP_PORT}:8000"
     depends_on:
-      - mongo
+      - mongo1
+      - mongo2
+      - mongo3
     env_file:
       - .env
