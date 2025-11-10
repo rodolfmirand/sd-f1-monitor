@@ -10,23 +10,31 @@ lock = threading.Lock()
 
 def handle_client(conn, addr):
     global next_car_id, next_isccp_id
-
     try:
-        tipo = conn.recv(1024).decode().strip().lower()
+        tipo_raw = conn.recv(1024)
+        if not tipo_raw:
+            conn.close()
+            return
+
+        tipo = tipo_raw.decode().strip().lower()
+
         with lock:
             if tipo == "car":
                 car_id = next_car_id
                 next_car_id += 1
                 conn.sendall(str(car_id).encode())
                 print(f"[ID SERVER] Enviado ID de CARRO {car_id} para {addr}")
+
             elif tipo == "isccp":
                 isccp_id = next_isccp_id
                 next_isccp_id += 1
                 conn.sendall(str(isccp_id).encode())
                 print(f"[ID SERVER] Enviado ID de ISCCP {isccp_id} para {addr}")
+
             else:
-                conn.sendall(b"ERRO: tipo invalido (use 'car' ou 'isccp')")
-                print(f"[ID SERVER] Tipo de cliente desconhecido: {tipo} ({addr})")
+                if tipo:
+                    conn.sendall(b"ERRO: tipo invalido (use 'car' ou 'isccp')")
+                    print(f"[ID SERVER] Tipo de cliente desconhecido: '{tipo}' ({addr})")
 
     except Exception as e:
         print(f"[ID SERVER] Erro ao lidar com {addr}: {e}")
