@@ -15,7 +15,7 @@ for conf in DBS:
         try:
             uri = f"mongodb://{conf['host']}:{MONGO_PORT}/"
             client = MongoClient(uri, serverSelectionTimeoutMS=2000)
-            client.admin.command("ping")  # testa conexão
+            client.admin.command("ping")
             clients.append(client[conf["db"]])
             print(f"[SVCP] Conectado ao banco {conf['db']} em {conf['host']}")
             break
@@ -59,7 +59,6 @@ def listar_veiculos():
 
 
 def obter_veiculo(idVeiculo: int):
-    # Retorna apenas o mais recente para o ID especificado
     for col in collections:
         doc = (
             col.find({"id": idVeiculo}, {"_id": 0})
@@ -84,7 +83,6 @@ def pneus_com_alerta():
 
     resultado = []
     for col in collections:
-        # Primeiro obtemos apenas os registros mais recentes
         latest_docs = _get_latest_per_vehicle(col)
         for v in latest_docs:
             if (
