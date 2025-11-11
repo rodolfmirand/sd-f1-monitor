@@ -25,19 +25,50 @@ for conf in DBS:
 
 collections = [db["telemetria"] for db in clients]
 
+def _get_latest_per_vehicle(col):
+    pipeline = [
+        {"$sort": {"id": 1, "timestamp": -1}},
+        {
+            "$group": {
+                "_id": "$id",
+                "latest": {"$first": "$$ROOT"}
+            }
+        },
+        {"$replaceRoot": {"newRoot": "$latest"}},
+        {"$project": {
+            "_id": 0,
+            "id": 1,
+            "name": 1,
+            "team": 1,
+            "front_left": 1,
+            "front_right": 1,
+            "rear_left": 1,
+            "rear_right": 1,
+            "position": 1,
+            "timestamp": 1
+        }}
+    ]
+    return list(col.aggregate(pipeline))
+
 
 def listar_veiculos():
     resultado = []
     for col in collections:
-        resultado.extend(list(col.find({}, {"_id": 0, "id": 1, "name": 1, "team": 1})))
+        resultado.extend(_get_latest_per_vehicle(col))
     return resultado
 
 
 def obter_veiculo(idVeiculo: int):
+    # Retorna apenas o mais recente para o ID especificado
     for col in collections:
-        veiculo = col.find_one({"id": idVeiculo}, {"_id": 0})
-        if veiculo:
-            return veiculo
+        doc = (
+            col.find({"id": idVeiculo}, {"_id": 0})
+            .sort("timestamp", -1)
+            .limit(1)
+        )
+        doc = list(doc)
+        if doc:
+            return doc[0]
     return None
 
 
@@ -53,9 +84,22 @@ def pneus_com_alerta():
 
     resultado = []
     for col in collections:
-        resultado.extend(list(col.find(query, {
-            "_id": 0, "id": 1, "name": 1, "team": 1,
-            "front_left": 1, "front_right": 1,
-            "rear_left": 1, "rear_right": 1
-        })))
+        # Primeiro obtemos apenas os registros mais recentes
+        latest_docs = _get_latest_per_vehicle(col)
+        for v in latest_docs:
+            if (
+                v.get("front_left", 999) < 85
+                or v.get("front_right", 999) < 85
+                or v.get("rear_left", 999) < 85
+                or v.get("rear_right", 999) < 85
+            ):
+                resultado.append({
+                    "id": v.get("id"),
+                    "name": v.get("name"),
+                    "team": v.get("team"),
+                    "front_left": v.get("front_left"),
+                    "front_right": v.get("front_right"),
+                    "rear_left": v.get("rear_left"),
+                    "rear_right": v.get("rear_right"),
+                })
     return resultado
