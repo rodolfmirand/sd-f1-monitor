@@ -1,17 +1,96 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<!doctype html>
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Frontend SCP</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard de Pneus · F1</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>Veículos</h1>
-  <ul id="veiculos"></ul>
+  <header class="header">
+    <div class="brand">
+      <div class="flag">🏁</div>
+      <div>
+        <h1>Monitor de Pneus</h1>
+        <p class="subtitle">Telemetria F1 · Tempo real</p>
+      </div>
+    </div>
 
-  <h1>Alertas de Pneus</h1>
-  <ul id="alertas"></ul>
+    <div class="controls">
+      <label for="refreshInterval">Atualizar a cada</label>
+      <select id="refreshInterval">
+        <option value="5000">5s</option>
+        <option value="10000">10s</option>
+        <option value="30000">30s</option>
+        <option value="0">Desligado</option>
+      </select>
+      <button id="refreshNow">Atualizar agora</button>
+    </div>
+  </header>
 
-  <script type="module" src="./script.js"></script>
+  <main class="container">
+    <section class="left">
+      <div class="card">
+        <h2>🏁 Ranking — Posição dos Carros</h2>
+        <div class="table-wrap">
+          <table id="rankingTable">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th>Carro</th>
+                <th>Equipe</th>
+                <th>FL</th>
+                <th>FR</th>
+                <th>RL</th>
+                <th>RR</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📊 Detalhes do Carro</h2>
+        <div id="carDetails" class="details-empty">
+          Selecione um carro no ranking para ver detalhes de pneus e histórico rápido.
+        </div>
+      </div>
+    </section>
+
+    <aside class="right">
+      <div class="card alerts">
+        <h2>⚠️ Alertas de Pneus</h2>
+        <div id="alertsList">
+          <p class="muted">Carregando alertas...</p>
+        </div>
+      </div>
+
+      <div class="card legend">
+        <h3>Legenda de Pressão</h3>
+        <ul>
+          <li><span class="dot green"></span> Normal (&gt; 90)</li>
+          <li><span class="dot orange"></span> Atenção (85–90)</li>
+          <li><span class="dot red"></span> Alerta (&lt; 85)</li>
+        </ul>
+        <p class="muted small">Pressões em PSI</p>
+      </div>
+    </aside>
+  </main>
+
+  <template id="rowTemplate">
+    <tr class="clickable-row">
+      <td class="pos"></td>
+      <td class="name"></td>
+      <td class="team"></td>
+      <td class="fl"></td>
+      <td class="fr"></td>
+      <td class="rl"></td>
+      <td class="rr"></td>
+    </tr>
+  </template>
+
+  <script src="script.js"></script>
 </body>
 </html>
