@@ -5,7 +5,7 @@ HOST = ''
 PORT = 5000
 
 next_car_id = 1
-next_isccp_id = 1000
+next_isccp_id = 1
 lock = threading.Lock()
 
 def handle_client(conn, addr):
