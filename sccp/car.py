@@ -1,6 +1,7 @@
 import paho.mqtt.client as mqtt
 import random, json, time, string, socket
 
+# Conecta ao id-server para gerar ID
 while True:
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -33,6 +34,7 @@ while True:
         print("[CAR] Broker ainda não disponível... tentando novamente em 2s")
         time.sleep(2)
 
+# Conecnta ao position-server para iniciar/atualizar posição na corrida  
 def get_position(car_id):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -45,6 +47,7 @@ def get_position(car_id):
         print(f"[CAR {car_id}] Erro ao obter posição de corrida: {e}")
         return car_id 
 
+# Posiciona o carro em um ISCCP aleatório
 TOTAL_ISCCP_LOCATIONS = 15
 current_location = random.randint(1, TOTAL_ISCCP_LOCATIONS)
 
@@ -69,6 +72,7 @@ while True:
     c.publish(topic, json.dumps(d))
     print(f"[CAR {id}] Chegou ao ISCCP {current_location} (Pos: {race_position}º). Enviando dados...")
 
+    # Atraso para carro publicar dados para próximo ISCCP
     time.sleep(random.uniform(2, 5))
 
     current_location += 1

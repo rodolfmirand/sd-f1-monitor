@@ -2,6 +2,7 @@ import paho.mqtt.client as mqtt
 import json, time, datetime, socket
 from models import CarData
 
+# Conecta ao id-server para gerar ID
 while True:
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -14,7 +15,7 @@ while True:
         print("[ISCCP] Servidor de ID ainda não disponível... tentando novamente em 2s")
         time.sleep(2)
 
-print(f"[ISCCP] Instância iniciada para LOCALIZAÇÃO {location_id}")
+print(f"[ISCCP] Instância iniciada para localização {location_id}")
 
 client = mqtt.Client(f"isccp-{location_id}")
 while True:
@@ -36,6 +37,8 @@ def on_message(c, userdata, msg):
         return
 
     ts = datetime.datetime.now().strftime("%H:%M:%S")
+
+    # Decide para qual SSACP será enviado os dados
     ssacp_target = (obj.id - 1) % SSACP_COUNT + 1
     topic = f"f1/ssacp/{ssacp_target}"
 
