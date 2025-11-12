@@ -23,7 +23,7 @@ name = ''.join(random.choices(string.ascii_uppercase, k=3)) + str(random.randint
 
 c = mqtt.Client(f"car{id}")
 
-time.sleep(id * 0.5)
+time.sleep(id * 0.5) 
 
 while True:
     try:
@@ -33,10 +33,7 @@ while True:
         print("[CAR] Broker ainda não disponível... tentando novamente em 2s")
         time.sleep(2)
 
-position = id
-
 def get_position(car_id):
-    """Solicita posição atual ao position-server"""
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(("position-server", 5050))
@@ -45,15 +42,16 @@ def get_position(car_id):
         s.close()
         return pos
     except Exception as e:
-        print(f"[CAR {car_id}] Erro ao obter posição: {e}")
+        print(f"[CAR {car_id}] Erro ao obter posição de corrida: {e}")
         return car_id 
 
-t = f"f1/carros/{id}"
-while True:
-    if random.random() < 0.3:
-        position += random.choice([-1, 1])
+TOTAL_ISCCP_LOCATIONS = 15
+current_location = random.randint(1, TOTAL_ISCCP_LOCATIONS)
 
-    position = get_position(id)
+print(f"[CAR {id}] Iniciando no ISCCP {current_location}...")
+
+while True:
+    race_position = get_position(id)
 
     d = {
         "id": id,
@@ -63,11 +61,16 @@ while True:
         "front_right": round(random.uniform(80, 100), 2),
         "rear_left": round(random.uniform(80, 100), 2),
         "rear_right": round(random.uniform(80, 100), 2),
-        "position": position,
+        "position": race_position,
         "timestamp": time.time()
     }
 
-    c.publish(t, json.dumps(d))
-    print(f"[CAR {id}] {d}")
+    topic = f"f1/isccp/{current_location}"
+    c.publish(topic, json.dumps(d))
+    print(f"[CAR {id}] Chegou ao ISCCP {current_location} (Pos: {race_position}º). Enviando dados...")
 
-    time.sleep(2 + id * 0.1)
+    time.sleep(random.uniform(2, 5))
+
+    current_location += 1
+    if current_location > TOTAL_ISCCP_LOCATIONS:
+        current_location = 1
