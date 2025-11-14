@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+service SACPService {
+  rpc StoreTelemetry (CarTelemetry) returns (StoreReply) {}
+}
+
+message CarTelemetry {
+  int32 id = 1;
+  string name = 2;
+  string team = 3;
+  double front_left = 4;
+  double front_right = 5;
+  double rear_left = 6;
+  double rear_right = 7;
+  int32 position = 8;
+  double timestamp = 9;
+}
+
+message StoreReply {
+  bool success = 1;
+}
