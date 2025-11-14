@@ -49,6 +49,7 @@ services:
     environment:
       - TOTAL_INSTANCES=15
       - TOTAL_CARS=24
+      - GRPC_PORT=50051
     env_file:
       - .env
 
@@ -94,51 +95,48 @@ services:
       retries: 5
       start_period: 10s
 
-  ssacp1:
+  ssacp-1:
     build:
       context: ./sccp
       dockerfile: Dockerfile
     command: python -u sacp.py
     depends_on:
-      mqtt-broker:
-        condition: service_started
       mongo1:
         condition: service_healthy
     environment:
       - MONGO_HOST=mongo1
       - MONGO_DB=f1_db_1
+      - GRPC_PORT=50051
     env_file:
       - .env
 
-  ssacp2:
+  ssacp-2:
     build:
       context: ./sccp
       dockerfile: Dockerfile
     command: python -u sacp.py
     depends_on:
-      mqtt-broker:
-        condition: service_started
       mongo2:
         condition: service_healthy
     environment:
       - MONGO_HOST=mongo2
       - MONGO_DB=f1_db_2
+      - GRPC_PORT=50051
     env_file:
     
       - .env
-  ssacp3:
+  ssacp-3:
     build:
       context: ./sccp
       dockerfile: Dockerfile
     command: python -u sacp.py
     depends_on:
-      mqtt-broker:
-        condition: service_started
       mongo3:
         condition: service_healthy
     environment:
       - MONGO_HOST=mongo3
       - MONGO_DB=f1_db_3
+      - GRPC_PORT=50051
     env_file:
       - .env
 
