@@ -10,11 +10,9 @@ positions = list(range(1, 25))
 lock = threading.Lock()
 
 CHANGE_INTERVAL = 3
-CHANGE_PROBABILITY = 0.25
-
+CHANGE_PROBABILITY = 0.5
 
 def handle_client(conn, addr):
-    """Retorna a posição atual do carro solicitante"""
     try:
         data = conn.recv(1024)
         if not data:
@@ -40,7 +38,6 @@ def handle_client(conn, addr):
 
 
 def simulate_race():
-    """Thread que ocasionalmente troca posições entre carros"""
     global positions
     while True:
         time.sleep(CHANGE_INTERVAL)
